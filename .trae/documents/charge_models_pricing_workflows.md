@@ -316,3 +316,243 @@ graph TD
     Q --> R[Apply Base Properties]
     R --> S[Process Default Fee]
     S --> T[Add to Results]
+    
+    D --> U[Process Single Fee]
+    U --> V[Calculate Base Amount]
+    V --> W[Create Base Fee]
+    W --> X[Add to Results]
+    
+    N --> Y[Return All Fees]
+    T --> Y
+    X --> Y
+```
+
+## 8. Tax Application Workflow
+
+```mermaid
+graph TD
+    A[Fee Creation] --> B{Apply Taxes?}
+    B -->|Yes| C[Initialize Tax Service]
+    B -->|No| D[Skip Tax Calculation]
+    
+    C --> E[Fees::ApplyTaxesService.call(fee: new_fee)]
+    E --> F{Tax Calculation Success?}
+    
+    F -->|Yes| G[Update Fee with Taxes]
+    G --> H[taxes_amount_cents = calculated_taxes]
+    H --> I[taxes_precise_amount_cents = precise_taxes]
+    I --> J[Update Total Amounts]
+    
+    F -->|No| K[Handle Tax Error]
+    K --> L[Log Error]
+    L --> M[Raise Exception]
+    
+    D --> N[Continue with Base Amount]
+    J --> N
+    M --> O[Fail Fee Creation]
+    
+    N --> P[Return Fee with Taxes]
+```
+
+## 9. Cache Integration Workflow
+
+```mermaid
+graph TD
+    A[Charge Processing Request] --> B[Initialize Cache Middleware]
+    B --> C[Generate Cache Key]
+    C --> D{Cache Enabled?}
+    
+    D -->|Yes| E[Check Cache]
+    E --> F{Cache Hit?}
+    F -->|Yes| G[Return Cached Result]
+    F -->|No| H[Process Charge]
+    
+    D -->|No| H
+    
+    H --> I[Execute Charge Model]
+    I --> J[Calculate Amount]
+    J --> K{Cache Enabled?}
+    
+    K -->|Yes| L[Store in Cache]
+    L --> M[Return Result]
+    K -->|No| M
+    
+    G --> M
+```
+
+## 10. Error Handling and Recovery Workflow
+
+```mermaid
+graph TD
+    A[Charge Processing] --> B{Try Processing}
+    B --> C[Execute Charge Model]
+    C --> D{Calculation Success?}
+    
+    D -->|Yes| E[Continue Processing]
+    D -->|No| F[Capture Error]
+    
+    F --> G{Error Type}
+    G -->|Validation Error| H[Return Validation Error]
+    G -->|Calculation Error| I[Return Calculation Error]
+    G -->|Aggregation Error| J[Return Aggregation Error]
+    G -->|Currency Error| K[Return Currency Error]
+    
+    H --> L[Log Error Details]
+    I --> L
+    J --> L
+    K --> L
+    
+    L --> M[Set Error on Result]
+    M --> N[Return Error Result]
+    
+    E --> O{More Processing?}
+    O -->|Yes| P[Continue to Next Step]
+    O -->|No| Q[Return Success Result]
+    
+    P --> R[Apply Proration]
+    R --> S[Apply Currency Conversion]
+    S --> T[Apply Taxes]
+    T --> U[Generate Fee]
+    U --> Q
+```
+
+## 11. Real-time Pricing Calculation Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API
+    participant Aggregation
+    participant ChargeModel
+    participant Cache
+    participant Currency
+    participant Tax
+    participant Fee
+    
+    Client->>API: POST /calculate-charge
+    API->>Cache: Check for cached result
+    Cache-->>API: Cache miss
+    API->>Aggregation: Request aggregation
+    Aggregation->>Aggregation: Process events
+    Aggregation-->>API: Return aggregation result
+    API->>ChargeModel: Create charge model instance
+    ChargeModel->>ChargeModel: Calculate base amount
+    ChargeModel-->>API: Return amount details
+    API->>Currency: Convert if needed
+    Currency-->>API: Return converted amounts
+    API->>Tax: Apply taxes
+    Tax-->>API: Return tax amounts
+    API->>Fee: Generate fee
+    Fee-->>API: Return fee object
+    API->>Cache: Store result
+    API-->>Client: Return pricing result
+```
+
+## 12. Batch Processing Workflow
+
+```mermaid
+graph TD
+    A[Batch Processing Request] --> B[Initialize Batch Processor]
+    B --> C[Load Configuration]
+    C --> D[Validate Charges]
+    
+    D --> E[Create Processing Queue]
+    E --> F[Partition by Model Type]
+    
+    F --> G[Process Standard Charges]
+    F --> H[Process Graduated Charges]
+    F --> I[Process Volume Charges]
+    F --> J[Process Package Charges]
+    F --> K[Process Percentage Charges]
+    
+    G --> L[Aggregate Results]
+    H --> L
+    I --> L
+    J --> L
+    K --> L
+    
+    L --> M[Apply Currency Conversions]
+    M --> N[Apply Taxes]
+    N --> O[Generate Fees]
+    
+    O --> P{All Successful?}
+    P -->|Yes| Q[Commit Transaction]
+    P -->|No| R[Rollback Transaction]
+    
+    Q --> S[Return Results]
+    R --> T[Return Error]
+```
+
+## 13. Configuration Management Workflow
+
+```mermaid
+graph TD
+    A[Configuration Change] --> B{Change Type}
+    B -->|Charge Model| C[Validate Model Properties]
+    B -->|Pricing Rules| D[Validate Pricing Logic]
+    B -->|Currency Settings| E[Validate Currency Configuration]
+    B -->|Tax Settings| F[Validate Tax Configuration]
+    
+    C --> G{Validation Success?}
+    G -->|Yes| H[Update Configuration]
+    G -->|No| I[Return Validation Error]
+    
+    D --> J{Validation Success?}
+    J -->|Yes| H
+    J -->|No| I
+    
+    E --> K{Validation Success?}
+    K -->|Yes| H
+    K -->|No| I
+    
+    F --> L{Validation Success?}
+    L -->|Yes| H
+    L -->|No| I
+    
+    H --> M[Clear Related Cache]
+    M --> N[Update Audit Log]
+    N --> O[Notify Subscribers]
+    O --> P[Return Success]
+    
+    I --> Q[Log Error]
+    Q --> R[Return Error Response]
+```
+
+## 14. Monitoring and Alerting Workflow
+
+```mermaid
+graph TD
+    A[System Monitoring] --> B[Collect Metrics]
+    B --> C[Processing Time]
+    B --> D[Error Rate]
+    B --> E[Cache Hit Rate]
+    B --> F[Currency Conversion Rate]
+    
+    C --> G{Threshold Exceeded?}
+    D --> H{Error Rate High?}
+    E --> I{Cache Performance Low?}
+    F --> J{Conversion Issues?}
+    
+    G -->|Yes| K[Alert: Performance Degradation]
+    H -->|Yes| L[Alert: High Error Rate]
+    I -->|Yes| M[Alert: Cache Issues]
+    J -->|Yes| N[Alert: Currency Issues]
+    
+    K --> O[Log Alert]
+    L --> O
+    M --> O
+    N --> O
+    
+    O --> P[Send Notification]
+    P --> Q[Create Incident]
+    Q --> R[Investigate Issue]
+    
+    R --> S{Issue Resolved?}
+    S -->|Yes| T[Close Incident]
+    S -->|No| U[Escalate Issue]
+    
+    T --> V[Update Documentation]
+    U --> W[Higher Level Support]
+```
+
+These comprehensive workflows ensure reliable, efficient, and maintainable pricing operations across all charge models while providing clear visibility into
